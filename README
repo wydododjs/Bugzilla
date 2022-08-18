@@ -1,0 +1,141 @@
+Fortify Software Security Center (SSC) and AWB Sample : Bugzilla Defect Tracking Integration
+
+
+-------------
+ABOUT
+-------------
+SSC is distributed with two variants of ALM, Bugzilla, Jira and Azure DevOps Server bug tracker plugins:
+  a) Pre-built bug tracker plugins in /plugins folder inside SSC server ZIP file for their immediate installation and usage
+  b) Bug tracker plugin sources in /Samples folder inside SSC server ZIP file that can be manually built
+       - either without any change (you should get JAR files with the same functionality as in (a) )
+       - or you can modify the original Fortify plugin source
+       - or you can create a completely new plugin using one of the originals as an example
+
+In SSC version 17.20 and later, the same final plugin JAR files are used for Fortify Software Security Center (SSC)
+and/or Audit Workbench (AWB).
+
+The bug tracker plugin interface exists as an extension point to allow end users to customize their integration
+between SSC/AWB and external defect tracking systems and then to use SSC or AWB GUIs to easily push the found defects there.
+User's requests are delegated to the SSC server or to AWB from where appropriate calls to the external defect tracking
+systems are submitted.
+
+This sample demonstrates how to implement, build, and deploy a bug tracker plugin for Bugzilla.
+
+
+------------------
+KNOWN LIMITATIONS
+------------------
+Bugzilla Plugin version 18.10 does not support using authenticated proxies over HTTPS.
+
+
+-------------
+REQUIREMENTS
+-------------
+
+Building the sample extension requires JDK 11. It is recommended to build with provided Gradle Wrapper script (gradlew).
+
+
+-------------
+BUILDING
+-------------
+
+NOTE:
+This Bugzilla plugin is described as a "Bug Tracker Plugin for Bugzilla 5",
+  even if the inner implementation class name is historically Bugzilla4BugTrackerPlugina.java.
+Without keeping the original plugin implementation class name, a bug tracker configuration assigned
+  to application versions from previous SSC releases would break.
+
+To build the Bugzilla bug tracker sample, simply run the following command from the Bugzilla's sample root directory:
+
+  > ./gradlew clean build
+
+If you have not changed anything, a new
+    "com.fortify.sample.BugTrackerPluginBugzilla-17.20.jar"
+should be generated in sample's ../dist folder.
+
+For more information about how to implement a plugin, see the plugin's interface JavaDoc and the SSC documentation.
+The bug tracker plugin public interface is distributed in sample's ../lib/fortify-public-[version].jar library.
+
+
+-----------------
+DEPLOYING IN SSC
+-----------------
+The bug tracker plugin can either replace one of the currently installed plugins, or it can be added as a new plugin.
+
+Replacing a current bug tracker plugin in SSC
+=============================================
+1. Start SSC and select the Administration page.
+2. From the left menu, select Plugins -> Bug Tracking.
+3. Disable and remove the plugin you want to replace.
+4. Click New to upload a new plugin.
+5. In the "Upload Plugin Bundle" dialog, click Browse and navigate to the ../dist folder and select
+   com.fortify.sample.BugTrackerPluginBugzilla-xx.yy.jar that you just built.
+6. Save your changes, enable the installed plugin, and start using it.
+
+IMPORTANT NOTE:
+If the plugin you just replaced was already configured for some application versions and you want the new plugin
+to serve for previously reported bugs, the full name of the new bug tracker implementation class must be exactly the same
+as the previous one.
+In the case of the Fortify original Bugzilla plugin, it is
+    "com.fortify.sample.bugtracker.bugzilla.Bugzilla4BugTrackerPlugin"
+The same class name also has to be set in [plugin.xml -> bugtracker class].
+
+Installing a new bug tracker plugin in SSC
+==========================================
+1. Start SSC and select the Administration page.
+2. From the left menu, select Plugins -> Bug Tracking.
+3. Click New to upload a new plugin.
+4. In the "Upload Plugin Bundle" dialog, click Browse and navigate to the ../dist folder and select
+   the new custom plugin JAR file you just built.
+5. Save your changes, enable the installed plugin, and start using it.
+
+Getting more information about bug tracker plugins
+==================================================
+See the corresponding SSC documentation for more detailed information about:
+  - adding/removing bug tracker plugins
+  - enabling/disabling bug tracker plugins
+  - configuring bug tracker plugins for application versions
+  - setting up and using a central SSC proxy with a bug tracker plugin (new in SSC 18.x)
+  - using an enhanced "proxy aware" bug tracker plugin API in custom bug tracker plugin implementations (new in SSC 18.x)
+
+IMPORTANT NOTES to plugins versioning:
+======================================
+1) The pair consisting of
+     - plugin symbolic bundle name [MANIFEST.MF -> Bundle-SymbolicName]
+     - bundle version [MANIFEST.MF -> Bundle-Version]
+   must be unique among all other installed plugins, otherwise the plugin installation fails.
+   (Note: this is by OSGi specification)
+2) The pair consisting of
+     - full name of the bug tracker implementation class [plugin.xml -> bugtracker class]
+     - plugin version [MANIFEST.MF -> Version]
+   must be unique among all other installed plugins, otherwise the plugin installation fails.
+   Also, if you are installing a new plugin version of plugin that is already present in SSC,
+   you have to give it a higher plugin version, otherwise SSC will refuse the installation.
+   See also the next paragraph (3)
+   (Note: this is by SSC design)
+3) You can change the plugin version number in the gradle script if necessary.
+   The plugin version has the format major[.minor[.micro[.qualifier]]], where all parts must be numbers only.
+   The exact constraint regex is "\d{1,9}(\.\d{1,9}(\.\d{1,9}(\.\d{1,19})?)?)?"
+   For the versions comparison, the version parts are converted to numbers
+   (for example 3.00148 is higher than 3.025).
+4) Version as a part of the bug tracker plugin file name (for example com.fortify.SomePlugin-18.10.jar)
+   is neither taken nor used internally as a plugin metadata and has only an informative value.
+   For example, if you only rename the JAR file from ..SomePlugin-18.10.jar to ..SomePlugin-33.444.jar,
+   the internal SSC plugin version still remains 18.10, exactly how it is defined in plugin's MANIFEST.MF.
+
+
+-----------------
+DEPLOYING IN AWB
+-----------------
+
+Copy the new or modified plugin JAR file from the ../dist folder to
+    <SCA_and_Apps_Install_Dir>/Core/private-bin/awb/eclipse/plugins/
+and issue an 'eclipse -clean -initialize' command in the 'eclipse' folder.
+
+
+-------------
+USING
+-------------
+
+Edit your application version profile within Software Security Center and configure/enable bug tracker plugin integration.
+Then you can start filing issues directly from this application version as bugs to the external bug tracker provider.
