@@ -68,14 +68,4 @@ jobs:
            SSC_URL: http://b8d00bd32ecb.sn.mynetname.net:8080/ssc
            SSC_TOKEN: b8f28277-eca4-40dd-afa4-d0cf3c911288
            SSC_APPVERSION: bugzilla:1
-
-
-    steps:    
-      - name: Export SSC vulnerability data to GitHub
-        uses: fortify/github-action/ssc-export@v1
-        env:
-          SSC_URL: ${{secrets.SSC_URL}}
-          SSC_TOKEN: ${{secrets.SSC_TOKEN}}
-          # SSC_APPVERSION: MyApp:MyVersion
-
           
